@@ -83,6 +83,13 @@ class OC_User_VPN extends \OCA\user_external\Base implements OCP\Authentication\
     }
 
     /**
+     * Returns true if the mobile app is checking
+     */
+    private function isMobileAppChecking(){
+        return (isset($_SERVER['PHP_AUTH_USER']) && empty($_SERVER['PHP_AUTH_USER']));
+    }
+
+    /**
      * Check if the password is correct without logging in the user
      *
      * @param string $uid      The username
@@ -91,6 +98,10 @@ class OC_User_VPN extends \OCA\user_external\Base implements OCP\Authentication\
      * @return true/false
      */
     public function checkPassword($uid, $password) {
+        if ($this->isMobileAppChecking()){
+            return false;
+        }
+
         try{
             $decoded = $this->checkVpnAuth(null);
             if (!$this->checkResponse($decoded)) {
@@ -113,6 +124,10 @@ class OC_User_VPN extends \OCA\user_external\Base implements OCP\Authentication\
      */
     public function isSessionActive()
     {
+        if ($this->isMobileAppChecking()){
+            return false;
+        }
+
         try{
             $decoded = $this->checkVpnAuth(null);
             if ($this->checkResponse($decoded)){
@@ -147,6 +162,10 @@ class OC_User_VPN extends \OCA\user_external\Base implements OCP\Authentication\
      */
     public function getCurrentUserId()
     {
+        if ($this->isMobileAppChecking()){
+            return false;
+        }
+        
         try{
             $decoded = $this->checkVpnAuth(null);
             if ($this->checkResponse($decoded)){
