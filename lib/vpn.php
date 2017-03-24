@@ -15,7 +15,7 @@
  * @license  http://www.gnu.org/licenses/agpl AGPL
  * @link     http://github.com/owncloud/apps
  */
-class OC_User_VPN extends \OCA\user_vpnauth\Base implements OCP\Authentication\IApacheBackend{
+class OC_User_VPNAUTH extends \OCA\user_vpnauth\Base implements OCP\Authentication\IApacheBackend{
     private $host;
     private $secure;
 
