@@ -5,7 +5,7 @@
  * later.
  * See the COPYING-README file.
  */
-namespace OCA\user_external;
+namespace OCA\user_vpnauth;
 use \OC_DB;
 
 /**
