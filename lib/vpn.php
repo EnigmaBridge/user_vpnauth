@@ -77,7 +77,7 @@ class OC_User_VPNAUTH extends \OCA\user_vpnauth\Base implements OCP\Authenticati
     private function checkResponse($decoded){
         return !empty($decoded)
             && isset($decoded->result)
-            && $decoded->result == true
+            && $decoded->result === true
             && isset($decoded->user)
             && isset($decoded->user->email);
     }
@@ -182,4 +182,13 @@ class OC_User_VPNAUTH extends \OCA\user_vpnauth\Base implements OCP\Authenticati
     }
 
 
+    /**
+     * Backend name to be shown in user management
+     * @return string the name of the backend to be shown
+     * @since 8.0.0
+     */
+    public function getBackendName()
+    {
+        return 'vpnauth';
+    }
 }

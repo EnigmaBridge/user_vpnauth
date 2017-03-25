@@ -6,7 +6,6 @@
  * See the COPYING-README file.
  */
 namespace OCA\user_vpnauth;
-use \OC_DB;
 
 /**
  * Base class for external auth implementations that stores users
@@ -20,7 +19,7 @@ use \OC_DB;
  * @license  http://www.gnu.org/licenses/agpl AGPL
  * @link     http://github.com/owncloud/apps
  */
-abstract class Base extends \OC_User_Backend{
+abstract class Base extends \OC_User_Backend implements \OCP\IUserBackend {
 	protected $backend = '';
 
 	/**
@@ -40,7 +39,8 @@ abstract class Base extends \OC_User_Backend{
 	 * @return bool
 	 */
 	public function deleteUser($uid) {
-		OC_DB::executeAudited(
+        $conn = \OC::$server->getDatabaseConnection();
+        $conn->executeQuery(
 			'DELETE FROM `*PREFIX*users_external_eb` WHERE `uid` = ? AND `backend` = ?',
 			array($uid, $this->backend)
 		);
@@ -55,11 +55,13 @@ abstract class Base extends \OC_User_Backend{
 	 * @return string display name
 	 */
 	public function getDisplayName($uid) {
-		$user = OC_DB::executeAudited(
+        $conn = \OC::$server->getDatabaseConnection();
+		$user = $conn->executeQuery(
 			'SELECT `displayname` FROM `*PREFIX*users_external_eb`'
 			. ' WHERE `uid` = ? AND `backend` = ?',
 			array($uid, $this->backend)
-		)->fetchRow();
+		)->fetch();
+
 		$displayName = trim($user['displayname'], ' ');
 		if (!empty($displayName)) {
 			return $displayName;
@@ -74,19 +76,17 @@ abstract class Base extends \OC_User_Backend{
 	 * @return array with all displayNames (value) and the corresponding uids (key)
 	 */
 	public function getDisplayNames($search = '', $limit = null, $offset = null) {
-		$result = OC_DB::executeAudited(
-			array(
-				'sql' => 'SELECT `uid`, `displayname` FROM `*PREFIX*users_external_eb`'
+        $conn = \OC::$server->getDatabaseConnection();
+        $stmt = $conn->prepare(
+				'SELECT `uid`, `displayname` FROM `*PREFIX*users_external_eb`'
 					. ' WHERE (LOWER(`displayname`) LIKE LOWER(?) '
 					. ' OR LOWER(`uid`) LIKE LOWER(?)) AND `backend` = ?',
-				'limit'  => $limit,
-				'offset' => $offset
-			),
-			array('%' . $search . '%', '%' . $search . '%', $this->backend)
-		);
+                $limit,
+				$offset);
+        $stmt->execute(array('%' . $search . '%', '%' . $search . '%', $this->backend));
 
 		$displayNames = array();
-		while ($row = $result->fetchRow()) {
+		while ($row = $stmt->fetch()) {
 			$displayNames[$row['uid']] = $row['displayname'];
 		}
 
@@ -99,17 +99,17 @@ abstract class Base extends \OC_User_Backend{
 	* @return array with all uids
 	*/
 	public function getUsers($search = '', $limit = null, $offset = null) {
-		$result = OC_DB::executeAudited(
-			array(
-				'sql' => 'SELECT `uid` FROM `*PREFIX*users_external_eb`'
+        $conn = \OC::$server->getDatabaseConnection();
+        $stmt = $conn->prepare(
+				'SELECT `uid` FROM `*PREFIX*users_external_eb`'
 					. ' WHERE LOWER(`uid`) LIKE LOWER(?) AND `backend` = ?',
-				'limit' => $limit,
-				'offset' => $offset
-			),
-			array($search . '%', $this->backend)
-		);
+				$limit,
+				$offset
+			);
+        $stmt->execute(array($search . '%', $this->backend));
+
 		$users = array();
-		while ($row = $result->fetchRow()) {
+		while ($row = $stmt->fetch()) {
 			$users[] = $row['uid'];
 		}
 		return $users;
@@ -136,7 +136,9 @@ abstract class Base extends \OC_User_Backend{
 		if (!$this->userExists($uid)) {
 			return false;
 		}
-		OC_DB::executeAudited(
+
+        $conn = \OC::$server->getDatabaseConnection();
+		$conn->executeQuery(
 			'UPDATE `*PREFIX*users_external_eb` SET `displayname` = ?'
 			. ' WHERE LOWER(`uid`) = ? AND `backend` = ?',
 			array($displayName, $uid, $this->backend)
@@ -153,8 +155,9 @@ abstract class Base extends \OC_User_Backend{
 	 */
 	protected function storeUser($uid)
 	{
+        $conn = \OC::$server->getDatabaseConnection();
 		if (!$this->userExists($uid)) {
-			OC_DB::executeAudited(
+		    $conn->executeQuery(
 				'INSERT INTO `*PREFIX*users_external_eb` ( `uid`, `backend` )'
 				. ' VALUES( ?, ? )',
 				array($uid, $this->backend)
@@ -170,11 +173,11 @@ abstract class Base extends \OC_User_Backend{
 	 * @return boolean
 	 */
 	public function userExists($uid) {
-		$result = OC_DB::executeAudited(
+        $conn = \OC::$server->getDatabaseConnection();
+        return $conn->executeQuery(
 			'SELECT COUNT(*) FROM `*PREFIX*users_external_eb`'
 			. ' WHERE LOWER(`uid`) = LOWER(?) AND `backend` = ?',
 			array($uid, $this->backend)
-		);
-		return $result->fetchOne() > 0;
+		)->rowCount() > 0;
 	}
 }
