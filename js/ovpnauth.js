@@ -90,6 +90,7 @@
                         link.text(ac_link_txt.format(sec));
                         if (diff >= cntdown){
                             console.log('Autologin fired');
+                            alt.hide();
                             $(vpnauth.options.loginForm.submit).click();
 
                         } else {
