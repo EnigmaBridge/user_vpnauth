@@ -6,6 +6,11 @@
  * See the COPYING-README file.
  */
 
+namespace OCA\User_VPNAuth;
+use OCP\IConfig;
+use OCP\ISession;
+use OCP\IURLGenerator;
+
 /**
  * User authentication against a VPN Auth server
  *
@@ -15,71 +20,48 @@
  * @license  http://www.gnu.org/licenses/agpl AGPL
  * @link     http://github.com/owncloud/apps
  */
-class OC_User_VPNAUTH extends \OCA\user_vpnauth\Base implements OCP\Authentication\IApacheBackend{
-    private $host;
-    private $secure;
+class VpnAuthBackend extends BaseBackend implements \OCP\Authentication\IApacheBackend{
+    /** @var VpnAuth */
+    private $vpnAuth;
+    /** @var IConfig */
+    private $config;
+    /** @var IURLGenerator */
+    private $urlGenerator;
+    /** @var ISession */
+    private $session;
 
     /**
      * Create new VPN authentication provider
-     *
+     * @param IConfig $config
+     * @param IURLGenerator $urlGenerator
+     * @param ISession $session
      * @param string  $host   Hostname or IP of FTP server
      * @param boolean $secure TRUE to enable SSL
      */
-    public function __construct($host, $secure=false) {
-        $this->host=$host;
-        $this->secure=$secure;
-        parent::__construct('vpn://' . $this->host);
-    }
+    public function __construct(IConfig $config,
+                                IURLGenerator $urlGenerator,
+                                ISession $session,
+                                $host=null,
+                                $secure=false) {
+        $this->config = $config;
+        $this->urlGenerator = $urlGenerator;
+        $this->session = $session;
 
-    /**
-     * Contacts user server, returns user object.
-     * Throws exception on non-auth.
-     * @param $uid
-     * @return decoded json server response
-     * @throws AuthServerFailException on network error
-     */
-    private function checkVpnAuth($uid){
-        $proto = $this->secure ? 'https' : 'http';
-        $url = '';
-
-        if (!empty($uid)){
-            $url = sprintf('%s://%s/api/v1.0/verify?ip=%s&user=%s', $proto, $this->host,
-                urlencode($_SERVER['REMOTE_ADDR']), urlencode($uid));
-        } else {
-            $url = sprintf('%s://%s/api/v1.0/verify?ip=%s', $proto, $this->host,
-                urlencode($_SERVER['REMOTE_ADDR']));
+        // If config was not passed, load manually
+        if (empty($config)){
+            $this->config = \OC::$server->getConfig();
+            $this->urlGenerator = \OC::$server->getURLGenerator();
+            $this->session = \OC::$server->getSession();
         }
 
-        $curl = curl_init($url);
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-
-        $curl_response = curl_exec($curl);
-        if ($curl_response === false) {
-            $info = curl_getinfo($curl);
-            curl_close($curl);
-            OCP\Util::writeLog(
-                'user_external', 'ERROR: vpnclient error: ' . var_export($info),
-                OCP\Util::ERROR
-            );
-            throw new AuthServerFailException();
+        if (empty($host)){
+            $host = $this->config->getAppValue('user_vpnauth', 'auth.host', '127.0.0.1');
+            $secure = $this->config->getAppValue('user_vpnauth', 'auth.secure', 'false');
+            $secure = 'true' === $secure || '1' === $secure;
         }
 
-        curl_close($curl);
-        $decoded = json_decode($curl_response);
-        return $decoded;
-    }
-
-    /**
-     * Checks the auth server response
-     * @param $decoded
-     * @return bool true if response is ok
-     */
-    private function checkResponse($decoded){
-        return !empty($decoded)
-            && isset($decoded->result)
-            && $decoded->result === true
-            && isset($decoded->user)
-            && isset($decoded->user->email);
+        $this->vpnAuth = new VpnAuth($host, $secure);
+        parent::__construct('vpn://' . $host);
     }
 
     /**
@@ -103,8 +85,8 @@ class OC_User_VPNAUTH extends \OCA\user_vpnauth\Base implements OCP\Authenticati
         }
 
         try{
-            $decoded = $this->checkVpnAuth(null);
-            if (!$this->checkResponse($decoded)) {
+            $decoded = $this->vpnAuth->checkVpnAuth(null);
+            if (!$this->vpnAuth->checkResponse($decoded)) {
                 return false;
             }
 
@@ -129,8 +111,8 @@ class OC_User_VPNAUTH extends \OCA\user_vpnauth\Base implements OCP\Authenticati
         }
 
         try{
-            $decoded = $this->checkVpnAuth(null);
-            if ($this->checkResponse($decoded)){
+            $decoded = $this->vpnAuth->checkVpnAuth(null);
+            if ($this->vpnAuth->checkResponse($decoded)){
                 $this->storeUser($decoded->user->email);
                 return true;
 
@@ -167,8 +149,8 @@ class OC_User_VPNAUTH extends \OCA\user_vpnauth\Base implements OCP\Authenticati
         }
 
         try{
-            $decoded = $this->checkVpnAuth(null);
-            if ($this->checkResponse($decoded)){
+            $decoded = $this->vpnAuth->checkVpnAuth(null);
+            if ($this->vpnAuth->checkResponse($decoded)){
                 $this->storeUser($decoded->user->email);
                 return $decoded->user->email;
 
@@ -181,6 +163,26 @@ class OC_User_VPNAUTH extends \OCA\user_vpnauth\Base implements OCP\Authenticati
         }
     }
 
+    /**
+     * Return the id of the current user
+     * @return string
+     * @since 6.0.0
+     */
+    public function checkVpnAuth()
+    {
+        try{
+            $decoded = $this->vpnAuth->checkVpnAuth(null);
+            if ($this->vpnAuth->checkResponse($decoded)){
+                return $decoded->user;
+
+            } else {
+                return false;
+            }
+
+        } catch (AuthServerFailException $e){
+            return false;
+        }
+    }
 
     /**
      * Backend name to be shown in user management
@@ -189,6 +191,6 @@ class OC_User_VPNAUTH extends \OCA\user_vpnauth\Base implements OCP\Authenticati
      */
     public function getBackendName()
     {
-        return 'vpnauth';
+        return 'user_vpnauth';
     }
 }

@@ -6,6 +6,9 @@
  * See the COPYING-README file.
  */
 
+namespace OCA\User_VPNAuth;
+use \Exception;
+
 /**
  * @since 9.1.0
  */

@@ -5,7 +5,7 @@
  * later.
  * See the COPYING-README file.
  */
-namespace OCA\user_vpnauth;
+namespace OCA\User_VPNAuth;
 
 /**
  * Base class for external auth implementations that stores users
@@ -19,7 +19,7 @@ namespace OCA\user_vpnauth;
  * @license  http://www.gnu.org/licenses/agpl AGPL
  * @link     http://github.com/owncloud/apps
  */
-abstract class Base extends \OC_User_Backend implements \OCP\IUserBackend {
+abstract class BaseBackend extends \OC_User_Backend implements \OCP\IUserBackend {
 	protected $backend = '';
 
 	/**
