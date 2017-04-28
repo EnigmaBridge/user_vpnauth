@@ -37,6 +37,7 @@
 
         var authUrl = OC.filePath('user_vpnauth', 'ajax', 'checkAuth.php');
         var curUser = OC.getCurrentUser();
+        var user_pass = 'any-passwd.you-are-using-vpn-authenticated-sso.';  // password placeholder for curious
 
         // Init
         vpnauth.init({
@@ -51,7 +52,7 @@
             },
         });
 
-        // Autologin feature ... Add submit link without chat functionality
+        // Autologin feature ...
         if (vpnauth.el_exists(vpnauth.options.loginForm.form) &&
             vpnauth.el_exists(vpnauth.options.loginForm.jid) &&
             vpnauth.el_exists(vpnauth.options.loginForm.pass)) {
@@ -66,7 +67,7 @@
                     var cntdown = 5;
                     var usr = d.user;
                     $(vpnauth.options.loginForm.jid).val(usr.email);
-                    $(vpnauth.options.loginForm.pass).val(usr.email);
+                    $(vpnauth.options.loginForm.pass).val(user_pass);
                     $(vpnauth.options.loginForm.submit).focus();
 
                     var ac_timer;
@@ -89,7 +90,6 @@
                         var sec = Math.ceil(cntdown - diff);
                         link.text(ac_link_txt.format(sec));
                         if (diff >= cntdown){
-                            console.log('Autologin fired');
                             alt.hide();
                             $(vpnauth.options.loginForm.submit).click();
 
