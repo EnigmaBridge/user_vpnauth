@@ -29,6 +29,8 @@ class VpnAuthBackend extends BaseBackend implements \OCP\Authentication\IApacheB
     private $urlGenerator;
     /** @var ISession */
     private $session;
+    /** @var boolean */
+    private $handleApache=false;
 
     /**
      * Create new VPN authentication provider
@@ -59,6 +61,9 @@ class VpnAuthBackend extends BaseBackend implements \OCP\Authentication\IApacheB
             $secure = $this->config->getAppValue('user_vpnauth', 'auth.secure', 'false');
             $secure = 'true' === $secure || '1' === $secure;
         }
+
+        $handleApache = $this->config->getAppValue('user_vpnauth', 'auth.apache', 'false');
+        $this->handleApache = $handleApache === 'true' || $handleApache === '1';
 
         $this->vpnAuth = new VpnAuth($host, $secure);
         parent::__construct('vpn://' . $host);
@@ -106,6 +111,10 @@ class VpnAuthBackend extends BaseBackend implements \OCP\Authentication\IApacheB
      */
     public function isSessionActive()
     {
+        if (!$this->handleApache){
+            return false;
+        }
+        
         if ($this->isMobileAppChecking()){
             return false;
         }
@@ -144,6 +153,10 @@ class VpnAuthBackend extends BaseBackend implements \OCP\Authentication\IApacheB
      */
     public function getCurrentUserId()
     {
+        if (!$this->handleApache){
+            return false;
+        }
+
         if ($this->isMobileAppChecking()){
             return false;
         }

@@ -21,6 +21,10 @@ $userBackend = new \OCA\User_VPNAuth\VpnAuthBackend(
 
 $app->setAuthBackend($userBackend);
 OC_User::useBackend($userBackend);
-OC_User::handleApacheAuth();
+
+$authApache = $config->getAppValue('user_vpnauth', 'auth.apache', 'false');
+if ($authApache === 'true' || $authApache === '1') {
+    OC_User::handleApacheAuth();
+}
 
 
