@@ -6,7 +6,8 @@
 	<licence>AGPL</licence>
 	<author>Dusan Klinec</author>
 	<dependencies>
-		<owncloud min-version="9.1" max-version="11.0" />
+		<owncloud min-version="8.0" max-version="9"/>
+		<nextcloud min-version="8.0" max-version="11"/>
 	</dependencies>
 	<version>0.4</version>
 	<types>
