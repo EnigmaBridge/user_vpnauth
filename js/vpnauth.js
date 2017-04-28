@@ -15,6 +15,17 @@ var vpnauth = null;
         /** Version of vpnauth */
         version: '< $ app.version $ >',
 
+        /**
+         * Checks if there is a element with the given selector
+         *
+         * @param {String} selector jQuery selector
+         * @return {Boolean}
+         */
+        el_exists: function(selector) {
+            return $(selector).length > 0;
+        },
+
+
     };
 
     /**
@@ -23,6 +34,8 @@ var vpnauth = null;
      */
     vpnauth.options = {
         authUrl: null,
+        loginForm: {},
+
     };
 
     /**
@@ -32,7 +45,8 @@ var vpnauth = null;
      */
     vpnauth.init = function(options){
         if (options) {
-            vpnauth.options.authUrl = options.authUrl;
+            vpnauth.options.authUrl = options.authUrl || {};
+            vpnauth.options.loginForm = options.loginForm || {};
         }
     };
 
@@ -60,6 +74,15 @@ var vpnauth = null;
 
     };
 
+    // First, checks if it isn't implemented yet.
+    if (!String.prototype.format) {
+        String.prototype.format = function() {
+            var args = arguments;
+            return this.replace(/{(\d+)}/g, function(match, number) {
+                return typeof args[number] !== 'undefined' ? args[number] : match;
+            });
+        };
+    }
 
 }(jQuery));
 

@@ -114,7 +114,7 @@ class VpnAuthBackend extends BaseBackend implements \OCP\Authentication\IApacheB
         if (!$this->handleApache){
             return false;
         }
-        
+
         if ($this->isMobileAppChecking()){
             return false;
         }
