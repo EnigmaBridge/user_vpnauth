@@ -55,7 +55,7 @@ class VpnAuthBackend extends BaseBackend implements \OCP\Authentication\IApacheB
         }
 
         if (empty($host)){
-            $host = $this->config->getAppValue('user_vpnauth', 'auth.host', '127.0.0.1');
+            $host = $this->config->getAppValue('user_vpnauth', 'auth.host', '127.0.0.1:32080');
             $secure = $this->config->getAppValue('user_vpnauth', 'auth.secure', 'false');
             $secure = 'true' === $secure || '1' === $secure;
         }

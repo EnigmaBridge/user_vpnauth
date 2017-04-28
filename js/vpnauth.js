@@ -15,17 +15,25 @@ var vpnauth = null;
         /** Version of vpnauth */
         version: '< $ app.version $ >',
 
-        /** Auth url */
-        authUrl: null
+    };
 
+    /**
+     * Options
+     * @type {{authUrl: null}}
+     */
+    vpnauth.options = {
+        authUrl: null,
     };
 
     /**
      * Init vpn auth plugin
      * @param options
+     * @param options.auth_url
      */
     vpnauth.init = function(options){
-        vpnauth.authUrl = options['auth_url'];
+        if (options) {
+            vpnauth.options.authUrl = options.authUrl;
+        }
     };
 
     /**
@@ -34,7 +42,7 @@ var vpnauth = null;
     vpnauth.checkVpnAuth = function(onAuth, onError){
         $.ajax({
             type: 'GET',
-            url: vpnauth.authUrl,
+            url: vpnauth.options.authUrl,
 
             success: function(d) {
                 if (d){
