@@ -11,7 +11,7 @@
  * @license MIT
  */
 
-/* global vpnauth, oc_appswebroots, OC, oc_requesttoken, dijit, oc_config, console */
+/* global vpnauth, oc_appswebroots, OC, oc_requesttoken, dijit, oc_config, console, jsxc */
 /* jshint latedef: nofunc */
 
 
@@ -112,7 +112,83 @@
             }
         }
 
+        // Autologin patch for ojsxc - if needed.
+        if (curUser && curUser.uid){
+            setTimeout(function () {
+                if (!jsxc || !jsxc.gui){
+                    console.log('JSXC not loaded');
+                    return;
+                }
 
+                // Set focus to username or password field
+                $(document).on("complete.dialog.jsxc", function() {
+                    if (!vpnauth.el_exists('#jsxc_username')){
+                        return;  // not a login dialog.
+                    }
+
+                    var dialog = $('#jsxc_dialog');
+                    var uname = $('#jsxc_username');
+                    var upass = $('#jsxc_password');
+
+                    vpnauth.checkVpnAuth(function(d){
+                        if (!d || !d.state || (d.state !== 'vpnauth')){
+                            console.log('Auto-login not applicable');
+                            return;
+                        }
+
+                        var cntdown = 5;
+                        var usr = d.user;
+                        var ac_timer;
+                        var ac_link_txt = $.t('JSXC_Autologin');
+                        ac_link_txt = 'Autologin: {0} s.';
+
+                        var $reset = dialog.find('button[type=reset]');
+                        var $submit = dialog.find('button[type=submit]');
+                        var $resetClone = $reset.clone();
+                        var oldSubmitTxt = $submit.text();
+
+                        uname.val(usr.email);
+                        upass.val(user_pass);
+                        $reset.hide();
+                        $resetClone.insertAfter($reset);
+                        $resetClone.off();
+                        $resetClone.removeClass('jsxc_close');
+                        $resetClone.attr('type', 'button');
+                        $resetClone.click(function(){
+                            clearTimeout(ac_timer);
+                            $submit.text(oldSubmitTxt);
+                            $resetClone.hide();
+                            $reset.show();
+                        });
+
+                        // Countdown + handler
+                        var al_start;
+                        var cntFnc = function(){
+                            if (al_start === undefined){
+                                al_start = $.now();
+                            }
+
+                            var diff = ($.now() - al_start) / 1000.0;
+                            var sec = Math.ceil(cntdown - diff);
+                            $submit.text(ac_link_txt.format(sec));
+                            if (diff >= cntdown){
+                                $resetClone.hide();
+                                $reset.show();
+                                $submit.click();
+
+                            } else {
+                                ac_timer = setTimeout(cntFnc, 250);
+                            }
+                        };
+
+                        // Countdown kick off
+                        cntFnc();
+
+                    }, function(err){});
+                });
+
+            }, 500);
+        }
     });
 }(jQuery));
 
