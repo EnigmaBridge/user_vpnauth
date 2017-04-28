@@ -59,8 +59,18 @@
 
             if (!curUser || !curUser.uid){
                 vpnauth.checkVpnAuth(function(d){
-                    if (!d || !d.state || d.state !== 'vpnauth'){
+                    if (!d || !d.state || (d.state !== 'vpnauth' && d.state !== 'unauth')){
                         console.log('Auto-login not applicable');
+                        return;
+                    }
+
+                    // Not connected to private space
+                    if (d.state === 'unauth'){
+                        var ac_no_vpn_txt = $.t('No_privatespace');
+                        ac_no_vpn_txt = 'Not connected to the Private Space';
+
+                        var ncalt = $('<p id="vpnauth_alt" class="warning"/>').append($('<span/>').text(ac_no_vpn_txt));
+                        $('#body-login').find('form:eq(0) .groupbottom').append(ncalt);
                         return;
                     }
 
@@ -99,15 +109,14 @@
                     };
 
                     alt = $('<p id="vpnauth_alt" class="warning"/>').append(link);
-                    $('#body-login form:eq(0) .groupbottom').append(alt);
+                    $('#body-login').find('form:eq(0) .groupbottom').append(alt);
 
                     // Countdown kick off
                     cntFnc();
 
-                }, function(err){
-                    // fail
-                });
+                }, function(err){});
             } else {
+                // logged in
                 console.log(curUser);
             }
         }
@@ -147,6 +156,7 @@
                         var $resetClone = $reset.clone();
                         var oldSubmitTxt = $submit.text();
 
+                        // Form hooks + controls
                         uname.val(usr.email);
                         upass.val(user_pass);
                         $reset.hide();
