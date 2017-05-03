@@ -170,6 +170,9 @@
                             $resetClone.hide();
                             $reset.show();
                         });
+                        $submit.click(function(){
+                            clearTimeout(ac_timer);
+                        });
 
                         // Countdown + handler
                         var al_start;
