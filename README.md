@@ -25,19 +25,4 @@ chown -R nginx:nginx user_vpnauth
 sudo -u nginx php occ app:enable user_vpnauth
 ```
 
-* Edit `owncloud/config/config.php`
-
-```php
- 'user_backends' => 
-  array (
-    0 => 
-    array (
-      'class' => 'OC_User_VPNAUTH',
-      'arguments' => 
-      array (
-        0 => '127.0.0.1:32080',
-      ),
-    ),
-  ),
-```
 
