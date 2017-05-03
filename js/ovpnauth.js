@@ -11,7 +11,7 @@
  * @license MIT
  */
 
-/* global vpnauth, oc_appswebroots, OC, oc_requesttoken, dijit, oc_config, console, jsxc */
+/* global vpnauth, oc_appswebroots, OC, oc_requesttoken, dijit, oc_config, console, jsxc, Strophe */
 /* jshint latedef: nofunc */
 
 
@@ -202,6 +202,73 @@
 
             }, 500);
         }
+
+        // Custom on roster handler - for new contact loading.
+        var onRoster = function(iq, target_jid){
+            if ($(iq).find('query').length === 0) {
+                jsxc.debug('Use cached roster');
+                return;
+            }
+
+            var buddies = [];
+
+            $(iq).find('item').each(function() {
+                var jid = $(this).attr('jid');
+                var name = $(this).attr('name') || jid;
+                var sub = $(this).attr('subscription');
+                var bid = jsxc.jidToBid(jid);
+
+                buddies.push(bid);
+                jsxc.gui.roster.remove(bid);
+
+                // Update existing buddies
+                jsxc.storage.saveBuddy(bid, {
+                    jid: jid,
+                    name: name,
+                    sub: sub,
+                    rnd: Math.random() // force storage event
+                });
+
+                jsxc.gui.roster.add(bid);
+            });
+
+            if (buddies.length === 0) {
+                jsxc.gui.roster.empty();
+            }
+
+            jsxc.storage.setUserItem('buddylist', buddies);
+            if ($(iq).find('query').attr('ver')) {
+                jsxc.storage.setUserItem('rosterVer', $(iq).find('query').attr('ver'));
+            }
+        };
+
+        // On presence handler
+        $(document).on("presence.jsxc", function(evt, from, status, presence) {
+            if (!jsxc || !jsxc.gui){
+                return;
+            }
+
+            var jid = Strophe.getBareJidFromJid(from).toLowerCase();
+            var bid = jsxc.jidToBid(jid);
+            var ri = jsxc.gui.roster.getItem(bid);
+            if (ri.length > 0){
+                return;
+            }
+
+            // Reload the roster...
+            var queryAttr = {
+                xmlns: 'jabber:iq:roster'
+            };
+
+            var iq = $iq({
+                type: 'get'
+            }).c('query', queryAttr);
+
+            jsxc.xmpp.conn.sendIQ(iq, function(iq){
+                onRoster(iq, jid);
+            });
+        });
+
     });
 }(jQuery));
 
