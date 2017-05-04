@@ -86,10 +86,13 @@
 
                     var al_start;
                     var alt;
-                    var link = $('<a/>').text(ac_link_txt.format(cntdown)).attr('href', '#').click(function() {
+                    var cancel_ac = function() {
                         clearTimeout(ac_timer);
                         alt.hide();
-                    });
+                    };
+
+                    var link = $('<a/>').text(ac_link_txt.format(cntdown)).attr('href', '#').click(cancel_ac);
+                    $(vpnauth.options.loginForm.submit).click(cancel_ac);
 
                     var cntFnc = function(){
                         if (al_start === undefined){
