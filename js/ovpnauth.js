@@ -134,7 +134,7 @@
 
                 // Set focus to username or password field
                 $(document).on("complete.dialog.jsxc", function() {
-                    if (!vpnauth.el_exists('#jsxc_username')){
+                    if (!vpnauth.el_exists('#jsxc_password')){
                         return;  // not a login dialog.
                     }
 
