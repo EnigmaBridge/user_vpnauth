@@ -187,6 +187,8 @@
                             var diff = ($.now() - al_start) / 1000.0;
                             var sec = Math.ceil(cntdown - diff);
                             $submit.text(ac_link_txt.format(sec));
+                            uname.val(usr.email);
+                            upass.val(user_pass);
                             if (diff >= cntdown){
                                 $resetClone.hide();
                                 $reset.show();
